@@ -28,12 +28,12 @@ String.prototype.tokens = function () {
 
     var WHITES              = /\s+/g;
     var ID                  = /[a-zA-Z_]\w*/g;
-    var NUM                 = /\d+(\.\d*)/;
-    var STRING              = _______________________________________;
-    var ONELINECOMMENT      = _______________________________________;
-    var MULTIPLELINECOMMENT = _______________________________________;
-    var TWOCHAROPERATORS    = _______________________________________;
-    var ONECHAROPERATORS    = _______________________________________;
+    var NUM                 = /\d+(\.\d*)?([eE][+-]?\d+)?\b/g;
+    var STRING              = /('(\\.|[^'])*'|"(\\.|[^"])*")/g;
+    var ONELINECOMMENT      = /\/\/.*/g;
+    var MULTIPLELINECOMMENT = /\/[*](.|\n)*?[*]\//g;
+    var TWOCHAROPERATORS    = /([+][+=]|-[-=]|=[=<>]|[<>][=<>]|&&|[|][|])/g;
+    var ONECHAROPERATORS    = /([-+*\/=()&|;:<>[\]])/g;
 
     // Make a token object.
     var make = function (type, value) {
@@ -46,28 +46,30 @@ String.prototype.tokens = function () {
     };
 
     // Begin tokenization. If the source string is empty, return nothing.
-    if (!this) return; 
+    if (!this) return;
+
+    var cadena = this; 
 
     // Loop through this text
-    while (i < this.length) {
+    while (i < cadena.length) {
         WHITES.lastIndex =  ID.lastIndex = NUM.lastIndex = STRING.lastIndex =
         ONELINECOMMENT.lastIndex = MULTIPLELINECOMMENT.lastIndex =
         TWOCHAROPERATORS.lastIndex = ONECHAROPERATORS.lastIndex = i;
         from = i;
         // Ignore whitespace.
-        if (m = WHITES.bexec(this)) {
+        if (m = WHITES.bexec(cadena)) {
             str = m[0];
-            _______________
+            cadena = cadena.substr(m.index + m[0].length);
         // name.
-        } else if (m = ID.bexec(this)) {
+        } else if (m = ID.bexec(cadena)) {
             str = m[0];
-            _______________
+            cadena = cadena.substr(m.index + m[0].length);
             result.push(make('name', str));
 
         // number.
-        } else if (m = NUM.bexec(this)) {
+        } else if (m = NUM.bexec(cadena)) {
             str = m[0];
-            _______________
+            cadena = cadena.substr(m.index + m[0].length);
 
             n = +str;
             if (isFinite(n)) {
@@ -76,30 +78,29 @@ String.prototype.tokens = function () {
                 make('number', str).error("Bad number");
             }
         // string
-        } else if (m = STRING.bexec(this)) {
+        } else if (m = STRING.bexec(cadena)) {
             str = m[0];
-            _______________
+            cadena = cadena.substr(m.index + m[0].length);
             str = str.replace(/^["']/,''); 
             str = str.replace(/["']$/,'');
             result.push(make('string', str));
         // comment.
-        } else if ((m = ONELINECOMMENT.bexec(this))  || 
-                   (m = MULTIPLELINECOMMENT.bexec(this))) {
+        } else if ((m = ONELINECOMMENT.bexec(cadena))  || 
+                   (m = MULTIPLELINECOMMENT.bexec(cadena))) {
             str = m[0];
-            _______________
+            cadena = cadena.substr(m.index + m[0].length);
         // two char operator
-        } else if (m = TWOCHAROPERATORS.bexec(this)) {
+        } else if (m = TWOCHAROPERATORS.bexec(cadena)) {
             str = m[0];
-            _______________
+            cadena = cadena.substr(m.index + m[0].length);
             result.push(make('operator', str));
         // single-character operator
-        } else if (m = ONECHAROPERATORS.bexec(this)){
-            result.push(make('operator', this.substr(i,1)));
-            _______________
+        } else if (m = ONECHAROPERATORS.bexec(cadena)){
+            result.push(make('operator', cadena.substr(i,1)));
+            cadena = cadena.substr(m.index + m[0].length);
         } else {
-          throw "Syntax error near '"+this.substr(i)+"'";
+          throw "Syntax error near '"+cadena.substr(i)+"'";
         }
     }
     return result;
 };
-
